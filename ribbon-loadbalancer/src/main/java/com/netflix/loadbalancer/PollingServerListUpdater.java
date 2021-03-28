@@ -14,6 +14,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
+ * 默认的服务更新策略，创建一个后台线程，
+ * 定时调用指定的{@link com.netflix.loadbalancer.ServerListUpdater.UpdateAction}
+ * 默认初始化延迟1s，间隔30s
+ *
  * A default strategy for the dynamic server list updater to update.
  * (refactored and moved here from {@link com.netflix.loadbalancer.DynamicServerListLoadBalancer})
  *

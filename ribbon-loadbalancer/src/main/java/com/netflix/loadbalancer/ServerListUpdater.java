@@ -1,6 +1,8 @@
 package com.netflix.loadbalancer;
 
 /**
+ * 服务动态更新策略
+ *
  * strategy for {@link com.netflix.loadbalancer.DynamicServerListLoadBalancer} to use for different ways
  * of doing dynamic server list updates.
  *

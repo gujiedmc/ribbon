@@ -20,6 +20,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
+ * 通过监听Eureka的事件，来动态刷新ribbon负载均衡器的服务列表。
+ * 事件处理逻辑在{@link #updateListener}，在{@link #start}中开启，当有{@link CacheRefreshedEvent}事件是调用{@link UpdateAction}
+ *
  * A server list updater for the {@link com.netflix.loadbalancer.DynamicServerListLoadBalancer} that
  * utilizes eureka's event listener to trigger LB cache updates.
  *
@@ -119,6 +122,7 @@ public class EurekaNotificationServerListUpdater implements ServerListUpdater {
     @Override
     public synchronized void start(final UpdateAction updateAction) {
         if (isActive.compareAndSet(false, true)) {
+            // Eureka事件监听
             this.updateListener = new EurekaEventListener() {
                 @Override
                 public void onEvent(EurekaEvent event) {
@@ -134,6 +138,7 @@ public class EurekaNotificationServerListUpdater implements ServerListUpdater {
                                     @Override
                                     public void run() {
                                         try {
+                                            // 处理逻辑
                                             updateAction.doUpdate();
                                             lastUpdated.set(System.currentTimeMillis());
                                         } catch (Exception e) {

@@ -23,6 +23,8 @@ import com.netflix.appinfo.InstanceInfo.PortType;
 import com.netflix.loadbalancer.Server;
 
 /**
+ * 基于Eureka的实例信息包装ribbon的server信息。
+ *
  * Servers that were obtained via Discovery and hence contain
  * meta data in the form of InstanceInfo
  * @author stonse

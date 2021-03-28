@@ -28,6 +28,8 @@ import com.netflix.loadbalancer.Server;
 
 
 /**
+ * 基于Eureka的负载均衡检测器，不做请求，直接通过Eureka中的{@link InstanceInfo#getStatus}查看状态是否是UP
+ *
  * "Ping" Discovery Client
  * i.e. we dont do a real "ping". We just assume that the server is up if Discovery Client says so
  * @author stonse

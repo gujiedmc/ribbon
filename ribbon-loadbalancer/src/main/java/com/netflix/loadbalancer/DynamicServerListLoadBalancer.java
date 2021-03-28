@@ -33,6 +33,15 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
+ * 可以动态数据源加载服务列表的负载均衡器。
+ *
+ * 1. {@link #serverListImpl}动态数据源。
+ * 2. 还支持使用{@link #filter}过滤掉不合适的服务。
+ * 3. 通过动态更新策略{@link #serverListUpdater}调用更新方法{@link #updateAction} 动态更新服务列表。
+ * 4. {@link #updateAction}方法会从{@link #serverListImpl} 加载最新的服务列表，
+ *    然后通过{@link #updateAllServerList}更新到负载均衡器
+ *
+ *
  * A LoadBalancer that has the capabilities to obtain the candidate list of
  * servers using a dynamic source. i.e. The list of servers can potentially be
  * changed at Runtime. It also contains facilities wherein the list of servers
@@ -51,6 +60,7 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
     // to keep track of modification of server lists
     protected AtomicBoolean serverListUpdateInProgress = new AtomicBoolean(false);
 
+    // 动态服务列表数据源
     volatile ServerList<T> serverListImpl;
 
     volatile ServerListFilter<T> filter;
@@ -123,6 +133,7 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
             String serverListUpdaterClassName = clientConfig.getOrDefault(
                     CommonClientConfigKey.ServerListUpdaterClassName);
 
+            // 创建服务更新器
             this.serverListUpdater = (ServerListUpdater) factory.create(serverListUpdaterClassName, clientConfig);
 
             restOfInit(clientConfig);
@@ -138,6 +149,7 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
         boolean primeConnection = this.isEnablePrimingConnections();
         // turn this off to avoid duplicated asynchronous priming done in BaseLoadBalancer.setServerList()
         this.setEnablePrimingConnections(false);
+        // 开启服务更新功能
         enableAndInitLearnNewServersFeature();
 
         updateListOfServers();
@@ -213,6 +225,8 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
     }
 
     /**
+     * 开启服务更新功能
+     *
      * Feature that lets us add new instances (from AMIs) to the list of
      * existing servers that the LB will use Call this method if you want this
      * feature enabled
@@ -232,6 +246,10 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
         }
     }
 
+    /**
+     * 用来从{@link #serverListImpl}加载最新的服务列表，更新到当前负载均衡器中。
+     * 更新的时候会使用{@link #filter}进行过滤
+     */
     @VisibleForTesting
     public void updateListOfServers() {
         List<T> servers = new ArrayList<T>();

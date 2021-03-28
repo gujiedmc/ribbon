@@ -38,6 +38,9 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Provider;
 
 /**
+ * {@link DynamicServerListLoadBalancer}的服务列表动态数据源实现，
+ * 支持从EurekaClient动态获取服务列表{@link #obtainServersViaDiscovery}
+ *
  * The server list class that fetches the server information from Eureka client. ServerList is used by
  * {@link DynamicServerListLoadBalancer} to get server list dynamically.
  *
@@ -148,6 +151,9 @@ public class DiscoveryEnabledNIWSServerList extends AbstractServerList<Discovery
         return obtainServersViaDiscovery();
     }
 
+    /**
+     * 从EurekaClient获取服务列表
+     */
     private List<DiscoveryEnabledServer> obtainServersViaDiscovery() {
         List<DiscoveryEnabledServer> serverList = new ArrayList<DiscoveryEnabledServer>();
 
