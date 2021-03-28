@@ -48,6 +48,26 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
+ * 负载均衡器的主要功能的实现。
+ *
+ * 服务列表，供查询和修改
+ * 全部： {@link #allServerList}
+ * UP: {@link #upServerList}
+ *
+ * 负载均衡算法：{@link #rule}
+ * 选择合适的服务：{@link #chooseServer}
+ * 
+ * PING 相关
+ * 
+ * {@link #ping} {@link #pingStrategy}
+ * 
+ * 定时ping，将up的服务更新到 {@link #upServerList}
+ * 启动：{@link #setupPingTask()}
+ * 取消：{@link #cancelPingTask()}
+ * 业务逻辑：{@link PingTask} {@link Pinger}
+ * 时间：{@link #pingIntervalSeconds}  {@link #setPingInterval(int)}
+ *
+ *
  * A basic implementation of the load balancer where an arbitrary list of
  * servers can be set as the server pool. A ping can be set to determine the
  * liveness of a server. Internally, this class maintains an "all" server list
@@ -61,15 +81,18 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
 
     private static Logger logger = LoggerFactory.getLogger(BaseLoadBalancer.class);
 
+    // 默认的轮训算法
     private final static IRule DEFAULT_RULE = new RoundRobinRule();
+    // 默认串行状态监测策略
     private final static SerialPingStrategy DEFAULT_PING_STRATEGY = new SerialPingStrategy();
     private static final String DEFAULT_NAME = "default";
     private static final String PREFIX = "LoadBalancer_";
 
+    // 负载均衡器算法，负责筛选合适的服务
     protected IRule rule = DEFAULT_RULE;
-
+    // 状态检查策略
     protected IPingStrategy pingStrategy = DEFAULT_PING_STRATEGY;
-
+    // 状态检测器
     protected IPing ping = null;
 
     @Monitor(name = PREFIX + "AllServerList", type = DataSourceType.INFORMATIONAL)
@@ -625,6 +648,8 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
     }
 
     /**
+     * 定时任务，每隔一段时间检查更新每个服务实例的健康状态。
+     *
      * TimerTask that keeps runs every X seconds to check the status of each
      * server/node in the Server List
      * 
@@ -656,6 +681,7 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
         }
 
         public void runPinger() throws Exception {
+            // 上一次执行还没结束
             if (!pingInProgress.compareAndSet(false, true)) { 
                 return; // Ping in progress - nothing to do
             }
@@ -880,6 +906,8 @@ public class BaseLoadBalancer extends AbstractLoadBalancer implements
     }
 
     /**
+     * 默认的串行ping方式，如果健康检查接口很慢或者服务器数量很多，可以自己进行实现。
+     *
      * Default implementation for <c>IPingStrategy</c>, performs ping
      * serially, which may not be desirable, if your <c>IPing</c>
      * implementation is slow, or you have large number of servers.

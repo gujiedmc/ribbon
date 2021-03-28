@@ -26,6 +26,8 @@ import com.netflix.client.config.Property;
 import javax.annotation.Nullable;
 
 /**
+ * 过滤掉熔断的服务和当前并发过高的服务
+ *
  * Predicate with the logic of filtering out circuit breaker tripped servers and servers 
  * with too many concurrent connections from this client.
  * 

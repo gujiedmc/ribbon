@@ -67,6 +67,26 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * will fall back to use {@link RoundRobinRule}. 
  * @author stonse
  */
+/**
+ * 后台定时任务{@link DynamicServerWeightTask}定时计算服务权重，
+ * 查询指定负载均衡器中的服务统计数据 {@link LoadBalancerStats},
+ * 根据其中的平均响应时间{@link ServerStats#getResponseTimeAvg()} 计算权重。
+ *
+ * 每个服务的权重 = 全部服务的总平均响应时间 - 该服务的平均响应时间
+ * 所以服务的平均响应时间越长，权重越小，越不容易被选中。
+ *
+ * 服务权重被设置到权重数组 {@link #accumulatedWeights}中，
+ * 选择服务的时候随机生成一个小于总权重的数字，根据数字在权重数组中的区间选择指定服务。
+ * 在服务权重尚未初始化，或者权重数组的长度和服务列表的长度不符时，会降级到轮训算法。
+ *
+ * 权重数组的规则如下：
+ * 每个index存放了从0到这个index之前所有服务的权重，例如index=2的存放了0-2一个三个服务的总权重。
+ *
+ * 例如5个服务，平均响应时间分别为  500 400 200 300 100
+ * 则权重分别为 1000 1100 1300 1200 1400
+ * 最后设置到权重数组为 1000 2100 3400 4600 6000
+ * 选择服务时如果生成的数字为1500，则落在1000-2100的index=1的服务上。
+ */
 public class WeightedResponseTimeRule extends RoundRobinRule {
 
     public static final IClientConfigKey<Integer> WEIGHT_TASK_TIMER_INTERVAL_CONFIG_KEY = new IClientConfigKey<Integer>() {
@@ -91,7 +111,9 @@ public class WeightedResponseTimeRule extends RoundRobinRule {
     private int serverWeightTaskTimerInterval = DEFAULT_TIMER_INTERVAL;
 
     private static final Logger logger = LoggerFactory.getLogger(WeightedResponseTimeRule.class);
-    
+
+    // 用来存放服务的权重，存放规则是每个index存放了从0到这个index之前所有服务的权重
+    // 例如index=2的存放了0-2一个三个服务的总权重。
     // holds the accumulated weight from index 0 to current index
     // for example, element at index 2 holds the sum of weight of servers from 0 to 2
     private volatile List<Double> accumulatedWeights = new ArrayList<Double>();
@@ -221,6 +243,9 @@ public class WeightedResponseTimeRule extends RoundRobinRule {
         return server;
     }
 
+    /**
+     * 后台根据服务响应时间更新服务权重的task
+     */
     class DynamicServerWeightTask extends TimerTask {
         public void run() {
             ServerWeight serverWeight = new ServerWeight();
@@ -231,6 +256,7 @@ public class WeightedResponseTimeRule extends RoundRobinRule {
             }
         }
     }
+
 
     class ServerWeight {
 

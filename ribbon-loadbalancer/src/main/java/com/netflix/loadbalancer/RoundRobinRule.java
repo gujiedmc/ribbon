@@ -25,6 +25,14 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * 最基本的轮训算法。
+ *
+ * 通过cas自增长的调用次数 {@link #nextServerCyclicCounter}
+ * 和通过{@link #getLoadBalancer()}查询到服务的总数量进行取模运算，
+ * 得出服务在服务列表中的index。
+ *
+ * 如果查询到的服务不可用（不存在或者状态检查异常），则进行重试，最多尝试10次
+ *
  * The most well known and basic load balancing strategy, i.e. Round Robin Rule.
  *
  * @author stonse
@@ -33,6 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class RoundRobinRule extends AbstractLoadBalancerRule {
 
+    // 次数统计，通过cas增加，
     private AtomicInteger nextServerCyclicCounter;
     private static final boolean AVAILABLE_ONLY_SERVERS = true;
     private static final boolean ALL_SERVERS = false;
@@ -92,6 +101,7 @@ public class RoundRobinRule extends AbstractLoadBalancerRule {
     }
 
     /**
+     * 取模运算获取服务索引
      * Inspired by the implementation of {@link AtomicInteger#incrementAndGet()}.
      *
      * @param modulo The modulo to bound the value of the counter.
@@ -101,6 +111,7 @@ public class RoundRobinRule extends AbstractLoadBalancerRule {
         for (;;) {
             int current = nextServerCyclicCounter.get();
             int next = (current + 1) % modulo;
+            // cas 保证线程安全
             if (nextServerCyclicCounter.compareAndSet(current, next))
                 return next;
         }

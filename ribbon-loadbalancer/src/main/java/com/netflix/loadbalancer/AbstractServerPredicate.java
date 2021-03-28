@@ -31,6 +31,8 @@ import com.google.common.collect.Lists;
 import com.netflix.client.config.IClientConfig;
 
 /**
+ * 服务过滤规则
+ *
  * A basic building block for server filtering logic which can be used in rules and server list filters.
  * The input object of the predicate is {@link PredicateKey}, which has Server and load balancer key
  * information. Therefore, it is possible to develop logic to filter servers by both Server and load balancer

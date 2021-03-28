@@ -20,6 +20,9 @@ package com.netflix.loadbalancer;
 import java.util.List;
 
 /**
+ * 负载均衡器接口。
+ * 可以添加、查询服务列表，标记指定服务宕机，根据指定key获取合适的服务。
+ *
  * Interface that defines the operations for a software loadbalancer. A typical
  * loadbalancer minimally need a set of servers to loadbalance for, a method to
  * mark a particular server to be out of rotation and a call that will choose a

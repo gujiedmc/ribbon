@@ -20,6 +20,10 @@ package com.netflix.loadbalancer;
 import java.util.List;
 
 /**
+ * 通过熔断指标{@link ServerStats#isCircuitBreakerTripped()}和并发请求数指标{@link ServerStats#getActiveRequestsCount()}
+ * 选择出没有进入熔断的服务中当前并发请求数最小的服务。
+ * 如果服务指标没有初始化或者没有选出合适的服务，则降级到轮训算法。
+ *
  * A rule that skips servers with "tripped" circuit breaker and picks the
  * server with lowest concurrent requests.
  * <p>

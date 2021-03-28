@@ -20,6 +20,7 @@ package com.netflix.loadbalancer;
 import com.netflix.client.config.IClientConfig;
 
 /**
+ * 使用的装饰者模式，内部维护了一个其他的IRule，可以在其他算法的基础上增加重试逻辑，默认对轮训算法进行增强
  * Given that
  * {@link IRule} can be cascaded, this {@link RetryRule} class allows adding a retry logic to an existing Rule.
  * 
