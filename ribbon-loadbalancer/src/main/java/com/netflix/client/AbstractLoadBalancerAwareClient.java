@@ -31,6 +31,8 @@ import com.netflix.loadbalancer.reactive.LoadBalancerCommand;
 import com.netflix.loadbalancer.reactive.ServerOperation;
 
 /**
+ * 对外提供的集成负载均衡功能的入口
+ *
  * Abstract class that provides the integration of client with load balancers.
  * 
  * @author awang
@@ -51,6 +53,8 @@ public abstract class AbstractLoadBalancerAwareClient<S extends ClientRequest, T
     }
     
     /**
+     * 判断异常是否进入断路
+     *
      * Determine if an exception should contribute to circuit breaker trip. If such exceptions happen consecutively
      * on a server, it will be deemed as circuit breaker tripped and enter into a time out when it will be
      * skipped by the {@link AvailabilityFilteringRule}, which is the default rule for load balancers.
@@ -64,6 +68,8 @@ public abstract class AbstractLoadBalancerAwareClient<S extends ClientRequest, T
     }
         
     /**
+     * 判断异常是否进入重试
+     *
      * Determine if operation can be retried if an exception is thrown. For example, connect 
      * timeout related exceptions
      * are typically retriable.
@@ -82,6 +88,10 @@ public abstract class AbstractLoadBalancerAwareClient<S extends ClientRequest, T
     }
 
     /**
+     * 当需要进行负载均衡选择服务进行请求分发时，可以调用这个方法使用负载均衡器选择服务，
+     * 这个方法会使用{@link ClientRequest#replaceUri} 替换选择服务器后的URI
+     * 然后将替换后的ClientRequest交给子类的{@link #execute}方法区执行http请求
+     *
      * This method should be used when the caller wants to dispatch the request to a server chosen by
      * the load balancer, instead of specifying the server in the request's URI. 
      * It calculates the final URI by calling {@link #reconstructURIWithServer(com.netflix.loadbalancer.Server, java.net.URI)}
@@ -91,6 +101,7 @@ public abstract class AbstractLoadBalancerAwareClient<S extends ClientRequest, T
      * URI which does not contain the host name or the protocol.
      */
     public T executeWithLoadBalancer(final S request, final IClientConfig requestConfig) throws ClientException {
+        // 创建一个负载均衡命令
         LoadBalancerCommand<T> command = buildLoadBalancerCommand(request, requestConfig);
 
         try {
@@ -98,6 +109,7 @@ public abstract class AbstractLoadBalancerAwareClient<S extends ClientRequest, T
                 new ServerOperation<T>() {
                     @Override
                     public Observable<T> call(Server server) {
+                        //
                         URI finalUri = reconstructURIWithServer(server, request.getUri());
                         S requestForServer = (S) request.replaceUri(finalUri);
                         try {

@@ -44,6 +44,14 @@ import com.netflix.loadbalancer.reactive.ExecutionListener.AbortExecutionExcepti
 import com.netflix.servo.monitor.Stopwatch;
 
 /**
+ * 响应式的负载均衡指令。
+ * 可以提供以下功能
+ *
+ * 1. 进行负载均衡Server选择
+ * 2. 执行
+ *
+ *
+ *
  * A command that is used to produce the Observable from the load balancer execution. The load balancer is responsible for
  * the following:
  *
@@ -173,6 +181,8 @@ public class LoadBalancerCommand<T> {
     }
     
     /**
+     * 选择服务
+     *
      * Return an Observable that either emits only the single requested server
      * or queries the load balancer for the next server on each subscription
      */
@@ -251,6 +261,9 @@ public class LoadBalancerCommand<T> {
     }
 
     /**
+     * 从负载均衡中获取到服务，然后执行{@link ServerOperation#call}执行业务逻辑，
+     * 如果需要重试的话，执行重试逻辑
+     *
      * Create an {@link Observable} that once subscribed execute network call asynchronously with a server chosen by load balancer.
      * If there are any errors that are indicated as retriable by the {@link RetryHandler}, they will be consumed internally by the
      * function and will not be observed by the {@link Observer} subscribed to the returned {@link Observable}. If number of retries has
